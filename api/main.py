@@ -12,19 +12,28 @@ import sqlite3
 from datetime import datetime
 
 # Add parent directory to path
-if __name__ != "__main__":
-    # When run by uvicorn, add parent to path
-    current_file = os.path.abspath(__file__)
-    api_dir = os.path.dirname(current_file)
-    project_root = os.path.dirname(api_dir)
-    
-    if project_root not in sys.path:
-        sys.path.insert(0, project_root)
-    
-    print(f"[DEBUG] Project root: {project_root}")
-    print(f"[DEBUG] Python path: {sys.path[:3]}")
+print("[DEBUG] Starting API initialization...")
+print(f"[DEBUG] Working directory: {os.getcwd()}")
+print(f"[DEBUG] __file__: {__file__}")
 
-from models.hybrid_search_engine import HybridSearchEngine
+# Add project root to path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+print(f"[DEBUG] Project root: {project_root}")
+
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+print(f"[DEBUG] sys.path: {sys.path[:3]}")
+
+print("[DEBUG] Attempting to import HybridSearchEngine...")
+try:
+    from models.hybrid_search_engine import HybridSearchEngine
+    print("[DEBUG]  Successfully imported HybridSearchEngine")
+except Exception as e:
+    print(f"[DEBUG]  Failed to import: {e}")
+    import traceback
+    traceback.print_exc()
+    raise
 
 # ============================================================================
 # LOGGING SETUP
