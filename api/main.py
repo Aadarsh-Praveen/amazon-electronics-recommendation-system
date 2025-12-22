@@ -6,11 +6,13 @@ import time
 import logging
 import sqlite3
 from datetime import datetime
+import subprocess
+subprocess.run(["python", "scripts/download_cache.py"])
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from hybrid_search_engine import HybridSearchEngine
+from models.hybrid_search_engine import HybridSearchEngine
 
 # ============================================================================
 # LOGGING SETUP

@@ -2,9 +2,9 @@ import sys
 import os
 sys.path.append(os.path.abspath("."))
                 
-from hybrid_search_engine import HybridSearchEngine
-from evaluation_metrics import Evaluator
-from evaluation_queries import EVALUATION_QUERIES
+from models.hybrid_search_engine import HybridSearchEngine
+from models.evaluation_metrics import Evaluator
+from data.evaluation_queries import EVALUATION_QUERIES
 import numpy as np
 
 print("SYSTEM EVALUATION")
