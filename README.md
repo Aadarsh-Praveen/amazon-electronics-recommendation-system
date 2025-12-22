@@ -117,11 +117,3 @@ amazon-product-recommendation/
 ```bash
 python scripts/evaluate_system.py
 ```
-
-## 📝 License
-
-MIT License
-
-## 👨‍💻 Author
-
-Aadarsh Praveen - [(https://github.com/Aadarsh-Praveen)]
