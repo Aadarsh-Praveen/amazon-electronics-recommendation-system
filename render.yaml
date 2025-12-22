@@ -1,0 +1,45 @@
+services:
+  # FastAPI Backend
+  - type: web
+    name: product-recommendation-api
+    env: python
+    region: oregon
+    plan: starter
+    buildCommand: pip install -r api/requirements.txt
+    startCommand: cd api && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.0
+    healthCheckPath: /health
+
+  # Streamlit UI
+  - type: web
+    name: product-recommendation-ui
+    env: python
+    region: oregon
+    plan: starter
+    buildCommand: pip install -r ui/requirements.txt
+    startCommand: cd ui && streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: API_BASE
+        value: https://product-recommendation-api.onrender.com
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+  # Monitoring Dashboard
+  - type: web
+    name: product-recommendation-monitor
+    env: python
+    region: oregon
+    plan: starter
+    buildCommand: pip install -r monitoring/requirements.txt
+    startCommand: cd monitoring && streamlit run dashboard.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: API_BASE
+        value: https://product-recommendation-api.onrender.com
+      - key: PYTHON_VERSION
+        value: 3.11.0
