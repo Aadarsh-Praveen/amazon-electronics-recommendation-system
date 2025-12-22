@@ -1,7 +1,3 @@
-print("STARTING API")
-print("Current directory:", os.getcwd())
-print("Python path:", sys.path)
-
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import sys
@@ -11,29 +7,21 @@ import logging
 import sqlite3
 from datetime import datetime
 
-# Add parent directory to path
-print("[DEBUG] Starting API initialization...")
-print(f"[DEBUG] Working directory: {os.getcwd()}")
-print(f"[DEBUG] __file__: {__file__}")
+
+# Add project root to path
+print("STARTING API")
+print(f"Current directory: {os.getcwd()}")
+print(f"Python version: {sys.version}")
+print(f"Cache exists: {os.path.exists('cache')}")
+print(f"BM25 exists: {os.path.exists('cache/bm25_index.pkl')}")
+print("=" * 80)
 
 # Add project root to path
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-print(f"[DEBUG] Project root: {project_root}")
-
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-print(f"[DEBUG] sys.path: {sys.path[:3]}")
-
-print("[DEBUG] Attempting to import HybridSearchEngine...")
-try:
-    from models.hybrid_search_engine import HybridSearchEngine
-    print("[DEBUG]  Successfully imported HybridSearchEngine")
-except Exception as e:
-    print(f"[DEBUG]  Failed to import: {e}")
-    import traceback
-    traceback.print_exc()
-    raise
+from models.hybrid_search_engine import HybridSearchEngine
 
 # ============================================================================
 # LOGGING SETUP
