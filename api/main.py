@@ -7,13 +7,6 @@ import logging
 import sqlite3
 from datetime import datetime
 
-try:
-    from scripts.download_cache import main as download_cache
-    print("Running download_cache.py")
-    download_cache()
-except Exception as e:
-    print("WARNING: Cache download failed:", e)
-
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
