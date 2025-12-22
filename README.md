@@ -124,4 +124,4 @@ MIT License
 
 ## 👨‍💻 Author
 
-Your Name - [(https://github.com/Aadarsh-Praveen)]
+Aadarsh Praveen - [(https://github.com/Aadarsh-Praveen)]
