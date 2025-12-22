@@ -6,8 +6,8 @@ import time
 import logging
 import sqlite3
 from datetime import datetime
-import subprocess
-subprocess.run(["python", "scripts/download_cache.py"])
+from scripts.download_cache import main as download_cache
+download_cache()
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
