@@ -1,3 +1,7 @@
+print("STARTING API")
+print("Current directory:", os.getcwd())
+print("Python path:", sys.path)
+
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import sys
@@ -8,7 +12,17 @@ import sqlite3
 from datetime import datetime
 
 # Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if __name__ != "__main__":
+    # When run by uvicorn, add parent to path
+    current_file = os.path.abspath(__file__)
+    api_dir = os.path.dirname(current_file)
+    project_root = os.path.dirname(api_dir)
+    
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    
+    print(f"[DEBUG] Project root: {project_root}")
+    print(f"[DEBUG] Python path: {sys.path[:3]}")
 
 from models.hybrid_search_engine import HybridSearchEngine
 
