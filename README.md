@@ -117,3 +117,42 @@ amazon-product-recommendation/
 ```bash
 python scripts/evaluate_system.py
 ```
+
+
+## 🗂️ Cache Files Setup
+
+The BM25 index files are too large for GitHub. You need to download them:
+
+### Local Development:
+```bash
+# Download cache files (after setting up URLs in scripts/download_cache.py)
+python scripts/download_cache.py
+```
+
+### Production (Render):
+
+Cache files will be automatically downloaded during deployment.
+```
+
+---
+
+### 10. **Fix Render Deployment Configuration**
+
+When deploying on Render, use these settings:
+
+**For API Service:**
+```
+Build Command: chmod +x scripts/build.sh && ./scripts/build.sh
+Start Command: cd api && uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+**For UI Service:**
+```
+Build Command: pip install -r ui/requirements.txt
+Start Command: cd ui && streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+```
+
+**For Monitoring Service:**
+```
+Build Command: pip install -r monitoring/requirements.txt
+Start Command: cd monitoring && streamlit run dashboard.py --server.port $PORT --server.address 0.0.0.0
