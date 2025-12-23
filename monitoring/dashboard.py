@@ -60,6 +60,21 @@ def get_health():
         return r.json() if r.status_code == 200 else {}
     except:
         return {"status": "offline"}
+    
+@st.cache_data(ttl=30)
+def load_queries(limit=1000):
+    """Load recent queries from API"""
+    try:
+        r = requests.get(f"{API_BASE}/query-logs?limit={limit}", timeout=10)
+        data = r.json()
+        
+        if data.get('logs'):
+            df = pd.DataFrame(data['logs'])
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            return df
+        return pd.DataFrame()
+    except:
+        return pd.DataFrame()
 
 # ============================================================================
 # HEADER

@@ -568,7 +568,7 @@ Contributions welcome! Please:
 ## 📧 Contact
 
 - **Email**: praveen.aadarsh@gmail.com
-- **LinkedIn**: [Your LinkedIn](https://www.linkedin.com/in/aadarsh-praveen/)
+- **LinkedIn**: [Aadarsh Praveen](https://www.linkedin.com/in/aadarsh-praveen/)
 - **Project Link**: https://github.com/Aadarsh-Praveen/amazon-electronics-recommendation-system
 
 ---
@@ -576,9 +576,9 @@ Contributions welcome! Please:
 ## 🔗 Links
 
 - **Live Demo**: https://amazon-electronics-recommendation-system-nyh2l8xc5kvnn2fxmyslf.streamlit.app/
-- **Monitoring Dashboard**: https://your-monitor.streamlit.app
-
+- **Monitoring Dashboard**: https://amazon-electronics-monitoring-jsimnwpux6qc28krptswp.streamlit.app/
 ---
+
 
 ## 📸 Screenshots
 

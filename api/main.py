@@ -183,6 +183,28 @@ def get_stats():
 def cache_stats():
     return engine.get_cache_stats()
 
+@app.get("/query-logs")
+def get_query_logs(limit: int = 1000):
+    """Get recent query logs from database"""
+    try:
+        import sqlite3
+        import pandas as pd
+        
+        conn = sqlite3.connect('logs/queries.db')
+        df = pd.read_sql_query(
+            f"SELECT * FROM queries ORDER BY timestamp DESC LIMIT {limit}", 
+            conn
+        )
+        conn.close()
+        
+        # Convert to dict for JSON serialization
+        return {
+            "logs": df.to_dict(orient='records'),
+            "count": len(df)
+        }
+    except Exception as e:
+        return {"logs": [], "count": 0, "error": str(e)}
+
 @app.get("/search")
 def search(
     query: str = Query(..., min_length=2),
