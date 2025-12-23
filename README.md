@@ -556,12 +556,6 @@ Contributions welcome! Please:
 
 ---
 
-## 👥 Authors
-
-- **Aadarsh Praveen** - [GitHub](https://github.com/YOUR_USERNAME)
-
----
-
 ## 🙏 Acknowledgments
 
 - Amazon Reviews Dataset from [UCSD](https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/)
@@ -573,16 +567,15 @@ Contributions welcome! Please:
 
 ## 📧 Contact
 
-- **Email**: your.email@example.com
-- **LinkedIn**: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- **Project Link**: https://github.com/YOUR_USERNAME/amazon-electronics-recommendation-system
+- **Email**: praveen.aadarsh@gmail.com
+- **LinkedIn**: [Your LinkedIn](https://www.linkedin.com/in/aadarsh-praveen/)
+- **Project Link**: https://github.com/Aadarsh-Praveen/amazon-electronics-recommendation-system
 
 ---
 
 ## 🔗 Links
 
-- **Live Demo**: https://your-app.streamlit.app
-- **API Documentation**: http://YOUR_VM_IP:8080/docs
+- **Live Demo**: https://amazon-electronics-recommendation-system-nyh2l8xc5kvnn2fxmyslf.streamlit.app/
 - **Monitoring Dashboard**: https://your-monitor.streamlit.app
 
 ---
