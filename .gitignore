@@ -19,45 +19,85 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Environment
-.env
-.venv
-env/
+# Virtual Environment
 venv/
+env/
 ENV/
 env.bak/
 venv.bak/
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.DS_Store
 
-# Jupyter
+# Jupyter Notebooks
 .ipynb_checkpoints/
-*.ipynb
+*.ipynb_checkpoints
+
+# Environment variables
+.env
+.env.local
+.env.*.local
 
 # Logs
-logs/*.log
-logs/queries.db
+logs/
+*.log
+*.log.*
 
-# Cache (too large for git)
-# cache/bm25_index.pkl  # Comment out if you want to commit
-# cache/product_id_mapping.pkl
+# Cache files (these are large, download from GCS)
+cache/
+*.pkl
+model_cache/
 
-# Data
-*.csv
-*.json
-!data/evaluation_queries.py
-!data/evaluation_results.json
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
 # OS
-.DS_Store
 Thumbs.db
+.DS_Store
 
-# Temporary
-tmp/
-temp/
+# Large data files (store in S3/GCS)
+*.csv
+*.json
+*.parquet
+*.gz
+
+# Docker
+.dockerignore
+
+# Build artifacts
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Distribution
+dist/
+build/
+
+# Exceptions (files you DO want to track)
+!requirements.txt
+!evaluation_results.json
+!data/evaluation_queries.py
+!README.md
+!LICENSE

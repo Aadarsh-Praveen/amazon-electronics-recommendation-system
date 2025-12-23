@@ -1,0 +1,111 @@
+{
+  "average_metrics": {
+    "Recall@5": 0.8033333333333333,
+    "Recall@10": 1.0,
+    "Precision@5": 0.62,
+    "MRR": 0.8333333333333333,
+    "NDCG@10": 0.8544785297053522
+  },
+  "per_query": [
+    {
+      "query": "noise cancelling headphones",
+      "metrics": {
+        "Recall@5": 1.0,
+        "Recall@10": 1.0,
+        "Precision@5": 1.0,
+        "MRR": 1.0,
+        "NDCG@10": 1.0
+      }
+    },
+    {
+      "query": "wireless bluetooth earbuds",
+      "metrics": {
+        "Recall@5": 1.0,
+        "Recall@10": 1.0,
+        "Precision@5": 0.6,
+        "MRR": 1.0,
+        "NDCG@10": 0.8529278650606567
+      }
+    },
+    {
+      "query": "GoPro camera accessories",
+      "metrics": {
+        "Recall@5": 1.0,
+        "Recall@10": 1.0,
+        "Precision@5": 1.0,
+        "MRR": 1.0,
+        "NDCG@10": 1.0
+      }
+    },
+    {
+      "query": "digital camera with zoom",
+      "metrics": {
+        "Recall@5": 1.0,
+        "Recall@10": 1.0,
+        "Precision@5": 1.0,
+        "MRR": 1.0,
+        "NDCG@10": 1.0
+      }
+    },
+    {
+      "query": "MP3 player long battery",
+      "metrics": {
+        "Recall@5": 1.0,
+        "Recall@10": 1.0,
+        "Precision@5": 0.2,
+        "MRR": 0.5,
+        "NDCG@10": 0.6309297535714575
+      }
+    },
+    {
+      "query": "USB cable iPhone",
+      "metrics": {
+        "Recall@5": 0.5,
+        "Recall@10": 1.0,
+        "Precision@5": 0.4,
+        "MRR": 0.5,
+        "NDCG@10": 0.7106752765782569
+      }
+    },
+    {
+      "query": "phone camera lens",
+      "metrics": {
+        "Recall@5": 0.6,
+        "Recall@10": 1.0,
+        "Precision@5": 0.6,
+        "MRR": 1.0,
+        "NDCG@10": 0.8738100898801323
+      }
+    },
+    {
+      "query": "tablet case",
+      "metrics": {
+        "Recall@5": 0.6,
+        "Recall@10": 1.0,
+        "Precision@5": 0.6,
+        "MRR": 1.0,
+        "NDCG@10": 0.9182162519778518
+      }
+    },
+    {
+      "query": "sound quality earphones",
+      "metrics": {
+        "Recall@5": 0.3333333333333333,
+        "Recall@10": 1.0,
+        "Precision@5": 0.2,
+        "MRR": 0.3333333333333333,
+        "NDCG@10": 0.558226059985166
+      }
+    },
+    {
+      "query": "budget headphones",
+      "metrics": {
+        "Recall@5": 1.0,
+        "Recall@10": 1.0,
+        "Precision@5": 0.6,
+        "MRR": 1.0,
+        "NDCG@10": 1.0
+      }
+    }
+  ]
+}

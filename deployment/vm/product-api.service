@@ -1,0 +1,18 @@
+[Unit]
+Description=Product Recommendation API
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/home/YOUR_USERNAME/app
+Environment="PATH=/home/YOUR_USERNAME/app/venv/bin"
+Environment="QDRANT_URL=https://your-qdrant-url"
+Environment="QDRANT_API_KEY=your-api-key"
+Environment="GCS_BUCKET_NAME=your-bucket-name"
+ExecStart=/home/YOUR_USERNAME/app/venv/bin/uvicorn api.main:app --host 0.0.0.0 --port 8080
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

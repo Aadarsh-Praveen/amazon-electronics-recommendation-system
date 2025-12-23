@@ -17,6 +17,7 @@ from qdrant_client import QdrantClient
 from fastembed import TextEmbedding
 from rank_bm25 import BM25Okapi
 from sentence_transformers import CrossEncoder
+from google.cloud import storage
 
 load_dotenv()
 
@@ -37,19 +38,53 @@ class HybridSearchEngine:
 
         # BM25 INDEX
         print("Loading BM25 index")
-        with open("cache/bm25_index.pkl", "rb") as f:
+        bm25_path = "cache/bm25_index.pkl"
+
+        if os.path.exists(bm25_path):
+            print(f"Loading BM25 from local cache: {bm25_path}")
+        else:
+            # Only try GCS if we're in cloud environment
+            if self._is_cloud_environment():
+                print("BM25 not found locally, downloading from GCS")
+                self._download_from_gcs("bm25_index.pkl")
+            else:
+                raise FileNotFoundError(
+                    f"{bm25_path} not found!\n"
+                    "For local development, please ensure cache files exist locally.\n"
+                    "Run: python scripts/create_bm25_index.py"
+                )
+        
+        with open(bm25_path, "rb") as f:
             data = pickle.load(f)
             self.bm25 = data["bm25"]
             self.bm25_product_ids = data["product_ids"]
 
+     
         # PRODUCT ID -> NUMERIC ID MAPPING
         print("Loading product_id mapping")
-        with open("cache/product_id_mapping.pkl", "rb") as f:
+        mapping_path = "cache/product_id_mapping.pkl"
+        
+        # Try local file first
+        if os.path.exists(mapping_path):
+            print(f"Loading mapping from local cache: {mapping_path}")
+        else:
+            # Only try GCS if we're in cloud environment
+            if self._is_cloud_environment():
+                print("Mapping not found locally, downloading from GCS")
+                self._download_from_gcs("product_id_mapping.pkl")
+            else:
+                raise FileNotFoundError(
+                    f"{mapping_path} not found!\n"
+                    "For local development, please ensure cache files exist locally.\n"
+                    "Run: python scripts/create_mapping.py"
+                )
+        
+        with open(mapping_path, "rb") as f:
             self.product_id_to_idx = pickle.load(f)
 
         # RERANKER MODEL
         print("Loading BGE CrossEncoder Reranker")
-        self.reranker = CrossEncoder("BAAI/bge-reranker-base", max_length=512)
+        self.reranker = CrossEncoder("BAAI/bge-reranker-base", max_length=512, local_files_only=True)
 
         # CACHES
         self._embedding_cache = {}
@@ -60,6 +95,35 @@ class HybridSearchEngine:
         self.max_cache_size = 1000  # LRU-like capacity
 
         print("Ready with Hybrid Search + Reranker!\n")
+
+    def _is_cloud_environment(self):
+        """Check if running in Google Cloud environment"""
+        # Check for common GCP environment variables
+        return (
+            os.getenv("K_SERVICE") is not None or  # Cloud Run
+            os.getenv("GAE_ENV") is not None or    # App Engine
+            os.getenv("FUNCTION_NAME") is not None # Cloud Functions
+        )
+
+    def _download_from_gcs(self, filename):
+        """Download a file from GCS (only in cloud environment)"""
+        try:
+            from google.cloud import storage
+            
+            bucket_name = os.getenv("GCS_BUCKET_NAME")
+            storage_client = storage.Client()
+            bucket = storage_client.bucket(bucket_name)
+            
+            blob = bucket.blob(f"cache/{filename}")
+            destination = f"cache/{filename}"
+            
+            os.makedirs("cache", exist_ok=True)
+            blob.download_to_filename(destination)
+            
+            print(f"✓ Downloaded {filename} from GCS")
+        except Exception as e:
+            print(f"✗ Failed to download {filename}: {e}")
+            raise
 
     # CACHED EMBEDDING
     def get_embedding(self, query: str):
