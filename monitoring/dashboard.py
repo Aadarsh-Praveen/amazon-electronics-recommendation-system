@@ -412,12 +412,14 @@ with tab4:
     # Color code cells without matplotlib
     def color_cells(val):
         if val >= 0.8:
-            color = '#d4edda'  # Light green
+            # Darker green background with dark text
+            return 'background-color: #90ee90; color: #000000; font-weight: bold'
         elif val >= 0.6:
-            color = '#fff3cd'  # Light yellow
+            # Light orange background with dark text
+            return 'background-color: #ffd700; color: #000000; font-weight: bold'
         else:
-            color = '#f8d7da'  # Light red
-        return f'background-color: {color}'
+            # Light red background with dark text
+            return 'background-color: #ffcccb; color: #000000; font-weight: bold'
     
     # Apply styling to numeric columns only
     styled_df = df_queries.style.applymap(
