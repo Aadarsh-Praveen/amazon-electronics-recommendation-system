@@ -1,11 +1,10 @@
 import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
-import sqlite3
 import pandas as pd
 import requests
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 
 st.set_page_config(
@@ -18,8 +17,11 @@ st.set_page_config(
 # CONFIG
 # ============================================================================
 
-API_BASE = os.getenv("API_BASE", "http://localhost:8000")
-DB_PATH = "logs/queries.db"
+# Get API base from secrets or environment
+try:
+    API_BASE = st.secrets["API_BASE"]
+except:
+    API_BASE = os.getenv("API_BASE", "http://localhost:8000")
 
 # ============================================================================
 # DATA LOADING
@@ -27,14 +29,18 @@ DB_PATH = "logs/queries.db"
 
 @st.cache_data(ttl=30)
 def load_queries(limit=1000):
-    """Load recent queries"""
+    """Load recent queries from API"""
     try:
-        conn = sqlite3.connect(DB_PATH)
-        df = pd.read_sql_query(f"SELECT * FROM queries ORDER BY timestamp DESC LIMIT {limit}", conn)
-        conn.close()
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
-        return df
-    except:
+        r = requests.get(f"{API_BASE}/query-logs?limit={limit}", timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            
+            if data.get('logs'):
+                df = pd.DataFrame(data['logs'])
+                df['timestamp'] = pd.to_datetime(df['timestamp'])
+                return df
+        return pd.DataFrame()
+    except Exception as e:
         return pd.DataFrame()
 
 @st.cache_data(ttl=60)
@@ -57,24 +63,9 @@ def get_cache_stats():
 def get_health():
     try:
         r = requests.get(f"{API_BASE}/health", timeout=5)
-        return r.json() if r.status_code == 200 else {}
+        return r.json() if r.status_code == 200 else {"status": "offline"}
     except:
         return {"status": "offline"}
-    
-@st.cache_data(ttl=30)
-def load_queries(limit=1000):
-    """Load recent queries from API"""
-    try:
-        r = requests.get(f"{API_BASE}/query-logs?limit={limit}", timeout=10)
-        data = r.json()
-        
-        if data.get('logs'):
-            df = pd.DataFrame(data['logs'])
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
-            return df
-        return pd.DataFrame()
-    except:
-        return pd.DataFrame()
 
 # ============================================================================
 # HEADER
@@ -90,6 +81,7 @@ if st.sidebar.checkbox("Auto-refresh (30s)", value=False):
     st.rerun()
 
 st.sidebar.markdown(f"**Last updated:** {datetime.now().strftime('%H:%M:%S')}")
+st.sidebar.markdown(f"**API Endpoint:** {API_BASE}")
 
 if st.sidebar.button("🔄 Refresh Now"):
     st.cache_data.clear()
@@ -99,7 +91,7 @@ if st.sidebar.button("🔄 Refresh Now"):
 # TABS
 # ============================================================================
 
-tab1, tab2, tab3, tab4 = st.tabs(["🏥 Health", "📈 Performance", "🔍 Queries", "📊 Evaluation"])
+tab1, tab2, tab3, tab4 = st.tabs(["🏥 Health", "📈 Performance", "🔍 Queries", "🎯 Evaluation"])
 
 # ============================================================================
 # TAB 1: SYSTEM HEALTH
@@ -117,13 +109,13 @@ with tab1:
     
     with col1:
         if health.get('status') == 'healthy':
-            st.success("✓ API: Healthy")
+            st.success("✅ API: Healthy")
         else:
-            st.error("✗ API: Offline")
+            st.error("❌ API: Offline")
     
     with col2:
         if health.get('qdrant') == 'connected':
-            st.success("✓ Qdrant: Connected")
+            st.success("✅ Qdrant: Connected")
         else:
             st.warning("⚠️ Qdrant: Disconnected")
     
@@ -132,7 +124,7 @@ with tab1:
     
     with col4:
         if health.get('models') == 'loaded':
-            st.success("✓ Models: Ready")
+            st.success("✅ Models: Ready")
         else:
             st.warning("⚠️ Models: Loading")
     
@@ -244,6 +236,9 @@ with tab2:
         st.markdown("---")
         st.subheader("Cache Performance")
         
+        # Convert to boolean if needed
+        df['cached'] = df['cached'].astype(bool)
+        
         cached = df[df['cached'] == True]
         uncached = df[df['cached'] == False]
         
@@ -260,12 +255,14 @@ with tab2:
             avg_uncached = uncached['response_time'].mean() if not uncached.empty else 0
             st.metric("Uncached Avg Time", f"{avg_uncached:.3f}s")
         
-        if not cached.empty and not uncached.empty:
+        if not cached.empty and not uncached.empty and avg_cached > 0:
             speedup = avg_uncached / avg_cached
             st.success(f"⚡ **Cache provides {speedup:.1f}× speedup**")
     
     else:
-        st.info("No performance data yet. Make some searches!")
+        st.info("📊 No performance data yet. Make some searches in the UI!")
+        st.markdown("**Your API endpoint:**")
+        st.code(f"{API_BASE}/search?query=headphones&top_k=3")
 
 # ============================================================================
 # TAB 3: QUERY ANALYTICS
@@ -316,120 +313,139 @@ with tab3:
             
             slowest = df.nlargest(10, 'response_time')[['query', 'response_time']]
             
-            for idx, (query, time_val) in slowest[['query', 'response_time']].iterrows():
-                st.write(f"**{query}** — {time_val:.2f}s")
+            for idx, row in slowest.iterrows():
+                st.write(f"**{row['query']}** — {row['response_time']:.2f}s")
         
         st.markdown("---")
         
         # Recent queries
-        st.subheader("Recent Searches")
+        st.subheader("🕐 Recent Searches")
         
         recent = df.head(20)[['timestamp', 'query', 'num_results', 'response_time', 'cached']].copy()
         recent['timestamp'] = recent['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-        recent['cached'] = recent['cached'].map({True: '⚡', False: '🔄'})
+        recent['cached'] = recent['cached'].astype(bool).map({True: '⚡', False: '🔄'})
         recent.columns = ['Time', 'Query', 'Results', 'Response (s)', 'Cache']
         
         st.dataframe(recent, use_container_width=True, hide_index=True)
     
     else:
-        st.info("No query data yet")
+        st.info("📊 No query data yet. Make some searches in the UI!")
 
 # ============================================================================
 # TAB 4: EVALUATION
 # ============================================================================
 
 with tab4:
-    st.header("Evaluation Metrics")
+    st.header("🎯 Evaluation Metrics")
     
-    try:
-        with open("evaluation_results.json", "r") as f:
-            eval_data = json.load(f)
-        
-        avg_metrics = eval_data.get('average_metrics', {})
-        
-        # Metrics display
-        st.subheader("Overall Performance")
-        
-        eval_col1, eval_col2, eval_col3, eval_col4, eval_col5 = st.columns(5)
-        
-        with eval_col1:
-            st.metric("Recall@5", f"{avg_metrics.get('Recall@5', 0):.3f}")
-        with eval_col2:
-            st.metric("Recall@10", f"{avg_metrics.get('Recall@10', 0):.3f}")
-        with eval_col3:
-            st.metric("Precision@5", f"{avg_metrics.get('Precision@5', 0):.3f}")
-        with eval_col4:
-            st.metric("MRR", f"{avg_metrics.get('MRR', 0):.3f}")
-        with eval_col5:
-            st.metric("NDCG@10", f"{avg_metrics.get('NDCG@10', 0):.3f}")
-        
-        st.markdown("---")
-        
-        # Bar chart
-        st.subheader("Metrics Visualization")
-        
-        metrics_df = pd.DataFrame({
-            'Metric': list(avg_metrics.keys()),
-            'Score': list(avg_metrics.values())
-        })
-        
-        fig = go.Figure(data=[
-            go.Bar(
-                x=metrics_df['Metric'],
-                y=metrics_df['Score'],
-                marker_color=['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6'],
-                text=metrics_df['Score'].round(3),
-                textposition='outside'
-            )
-        ])
-        fig.update_layout(
-            title="Evaluation Metrics (Higher is Better)",
-            yaxis_range=[0, 1.1],
-            height=450
+    # Use static evaluation data (always available)
+    st.markdown("""
+    **Offline Evaluation Results** (10 test queries)
+    """)
+    
+    # Static metrics
+    avg_metrics = {
+        'Recall@5': 0.803,
+        'Recall@10': 1.0,
+        'Precision@5': 0.620,
+        'MRR': 0.833,
+        'NDCG@10': 0.854
+    }
+    
+    # Metrics display
+    st.subheader("Overall Performance")
+    
+    eval_col1, eval_col2, eval_col3, eval_col4, eval_col5 = st.columns(5)
+    
+    with eval_col1:
+        st.metric("Recall@5", f"{avg_metrics['Recall@5']:.3f}")
+    with eval_col2:
+        st.metric("Recall@10", f"{avg_metrics['Recall@10']:.3f}")
+    with eval_col3:
+        st.metric("Precision@5", f"{avg_metrics['Precision@5']:.3f}")
+    with eval_col4:
+        st.metric("MRR", f"{avg_metrics['MRR']:.3f}")
+    with eval_col5:
+        st.metric("NDCG@10", f"{avg_metrics['NDCG@10']:.3f}")
+    
+    st.markdown("---")
+    
+    # Bar chart
+    st.subheader("Metrics Visualization")
+    
+    fig = go.Figure(data=[
+        go.Bar(
+            x=list(avg_metrics.keys()),
+            y=list(avg_metrics.values()),
+            marker_color=['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6'],
+            text=[f"{v:.3f}" for v in avg_metrics.values()],
+            textposition='outside'
         )
-        st.plotly_chart(fig, use_container_width=True)
-        
-        st.markdown("---")
-        
-        # Per-query performance
-        st.subheader("Per-Query Performance")
-        
-        per_query = eval_data.get('per_query', [])
-        
-        if per_query:
-            query_data = []
-            for item in per_query:
-                query_data.append({
-                    'Query': item['query'],
-                    'Recall@5': round(item['metrics']['Recall@5'], 3),
-                    'Precision@5': round(item['metrics']['Precision@5'], 3),
-                    'MRR': round(item['metrics']['MRR'], 3),
-                    'NDCG@10': round(item['metrics']['NDCG@10'], 3)
-                })
-            
-            df_queries = pd.DataFrame(query_data)
-            
-            st.dataframe(
-                df_queries.style.background_gradient(
-                    cmap='RdYlGn',
-                    subset=['Recall@5', 'Precision@5', 'MRR', 'NDCG@10']
-                ),
-                use_container_width=True,
-                hide_index=True
-            )
+    ])
+    fig.update_layout(
+        title="Evaluation Metrics (Higher is Better)",
+        yaxis_range=[0, 1.1],
+        height=450
+    )
+    st.plotly_chart(fig, use_container_width=True)
     
-    except FileNotFoundError:
-        st.warning("📁 No evaluation results found")
-        st.info("Run evaluation:\n```bash\npython Testing/evaluate_system.py\n```")
-    except Exception as e:
-        st.error(f"Error: {e}")
+    st.markdown("---")
+    
+    # Per-query performance (static data)
+    st.subheader("Per-Query Performance")
+    
+    per_query_data = [
+        {'Query': 'noise cancelling headphones', 'Recall@5': 1.000, 'Precision@5': 1.000, 'MRR': 1.000, 'NDCG@10': 1.000},
+        {'Query': 'wireless bluetooth earbuds', 'Recall@5': 1.000, 'Precision@5': 0.600, 'MRR': 1.000, 'NDCG@10': 0.853},
+        {'Query': 'GoPro camera accessories', 'Recall@5': 1.000, 'Precision@5': 1.000, 'MRR': 1.000, 'NDCG@10': 1.000},
+        {'Query': 'digital camera with zoom', 'Recall@5': 1.000, 'Precision@5': 1.000, 'MRR': 1.000, 'NDCG@10': 1.000},
+        {'Query': 'MP3 player long battery', 'Recall@5': 1.000, 'Precision@5': 0.200, 'MRR': 0.500, 'NDCG@10': 0.631},
+        {'Query': 'USB cable iPhone', 'Recall@5': 0.500, 'Precision@5': 0.400, 'MRR': 0.500, 'NDCG@10': 0.711},
+        {'Query': 'phone camera lens', 'Recall@5': 0.600, 'Precision@5': 0.600, 'MRR': 1.000, 'NDCG@10': 0.874},
+        {'Query': 'tablet case', 'Recall@5': 0.600, 'Precision@5': 0.600, 'MRR': 1.000, 'NDCG@10': 0.918},
+        {'Query': 'sound quality earphones', 'Recall@5': 0.333, 'Precision@5': 0.200, 'MRR': 0.333, 'NDCG@10': 0.558},
+        {'Query': 'budget headphones', 'Recall@5': 1.000, 'Precision@5': 0.600, 'MRR': 1.000, 'NDCG@10': 1.000}
+    ]
+    
+    df_queries = pd.DataFrame(per_query_data)
+    
+    # Color code cells without matplotlib
+    def color_cells(val):
+        if val >= 0.8:
+            color = '#d4edda'  # Light green
+        elif val >= 0.6:
+            color = '#fff3cd'  # Light yellow
+        else:
+            color = '#f8d7da'  # Light red
+        return f'background-color: {color}'
+    
+    # Apply styling to numeric columns only
+    styled_df = df_queries.style.applymap(
+        color_cells, 
+        subset=['Recall@5', 'Precision@5', 'MRR', 'NDCG@10']
+    )
+    
+    st.dataframe(styled_df, use_container_width=True, hide_index=True)
+    
+    st.markdown("---")
+    
+    st.info("""
+    **Metrics Explanation:**
+    - **Recall@5**: Percentage of relevant items found in top 5 results
+    - **Recall@10**: Percentage of relevant items found in top 10 results
+    - **Precision@5**: Percentage of top 5 results that are relevant
+    - **MRR**: Mean Reciprocal Rank - measures how quickly relevant items appear
+    - **NDCG@10**: Normalized Discounted Cumulative Gain - overall ranking quality
+    
+    🟢 Green (≥0.8) = Excellent | 🟡 Yellow (0.6-0.8) = Good | 🔴 Red (<0.6) = Needs Improvement
+    """)
 
 # ============================================================================
 # SIDEBAR
 # ============================================================================
 
 with st.sidebar:
-    st.header("Dashboard Controls")
+    st.header("📊 Dashboard Info")
     
     st.markdown("---")
     
@@ -439,15 +455,22 @@ with st.sidebar:
     if not df.empty:
         st.metric("Total Queries", len(df))
         st.metric("Avg Response", f"{df['response_time'].mean():.2f}s")
-        st.metric("Cache Rate", f"{(df['cached'].sum() / len(df))*100:.0f}%")
+        cached_pct = (df['cached'].astype(bool).sum() / len(df)) * 100
+        st.metric("Cache Rate", f"{cached_pct:.0f}%")
+    else:
+        st.info("No query data yet")
     
     st.markdown("---")
     
     st.info("""
-    **Features:**
-    - Real-time metrics
-    - Latency tracking
-    - Query analytics
-    - Cache monitoring
-    - Evaluation results
+    **Dashboard Features:**
+    - ✅ Real-time health monitoring
+    - ✅ Performance analytics
+    - ✅ Query tracking
+    - ✅ Cache statistics
+    - ✅ Evaluation metrics
+    
+    **Data Source:**
+    - API endpoint for live data
+    - Static data for evaluation
     """)

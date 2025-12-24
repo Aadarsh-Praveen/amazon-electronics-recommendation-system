@@ -184,26 +184,54 @@ def cache_stats():
     return engine.get_cache_stats()
 
 @app.get("/query-logs")
-def get_query_logs(limit: int = 1000):
+def get_query_logs(limit: int = Query(1000, ge=1, le=5000)):
     """Get recent query logs from database"""
     try:
-        import sqlite3
-        import pandas as pd
-        
         conn = sqlite3.connect('logs/queries.db')
-        df = pd.read_sql_query(
-            f"SELECT * FROM queries ORDER BY timestamp DESC LIMIT {limit}", 
-            conn
-        )
+        
+        query_sql = f"""
+            SELECT 
+                timestamp,
+                query,
+                num_results,
+                response_time,
+                cached,
+                embedding_time,
+                dense_time,
+                bm25_time,
+                fusion_time,
+                reranker_time,
+                use_reranker
+            FROM queries 
+            ORDER BY timestamp DESC 
+            LIMIT {limit}
+        """
+        
+        cursor = conn.cursor()
+        cursor.execute(query_sql)
+        
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        
         conn.close()
         
-        # Convert to dict for JSON serialization
+        # Convert to list of dicts
+        logs = [dict(zip(columns, row)) for row in rows]
+        
+        logger.info(f"Retrieved {len(logs)} query logs")
+        
         return {
-            "logs": df.to_dict(orient='records'),
-            "count": len(df)
+            "logs": logs,
+            "count": len(logs)
         }
+        
     except Exception as e:
-        return {"logs": [], "count": 0, "error": str(e)}
+        logger.error(f"Failed to retrieve query logs: {e}")
+        return {
+            "logs": [],
+            "count": 0,
+            "error": str(e)
+        }
 
 @app.get("/search")
 def search(
